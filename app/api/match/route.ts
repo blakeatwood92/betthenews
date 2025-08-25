@@ -29,6 +29,15 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error("Match API error:", error)
-    return NextResponse.json({ error: "Failed to match news with markets" }, { status: 500 })
+    return NextResponse.json(
+      {
+        matches: [],
+        total: 0,
+        query,
+        topic,
+        error: "Service temporarily unavailable",
+      },
+      { status: 200 },
+    )
   }
 }

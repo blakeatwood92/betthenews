@@ -3,7 +3,14 @@ import { getSession } from "@/lib/auth"
 import LoginForm from "@/components/cms/login-form"
 
 export default async function LoginPage() {
-  const session = await getSession()
+  let session = null
+
+  try {
+    session = await getSession()
+  } catch (error) {
+    console.error("Session error:", error)
+    // Continue without session check if there's an error
+  }
 
   if (session) {
     redirect("/cms/dashboard")
