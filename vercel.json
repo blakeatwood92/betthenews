@@ -1,0 +1,28 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/refresh-news?token=${NEWS_REFRESH_TOKEN}",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/admin/refresh-news?category=world&token=${NEWS_REFRESH_TOKEN}",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/admin/refresh-news?category=tech&token=${NEWS_REFRESH_TOKEN}",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/admin/refresh-news?category=economy&token=${NEWS_REFRESH_TOKEN}",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/admin/refresh-news?category=sports&token=${NEWS_REFRESH_TOKEN}",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/admin/refresh-news?category=politics&token=${NEWS_REFRESH_TOKEN}",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
