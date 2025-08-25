@@ -171,8 +171,12 @@ export class NewsMatchingEngine {
    * Calculate similarity score between news item and market
    */
   private calculateScore(newsItem: NewsItem, market: PolymarketMarket): number {
-    const newsText = `${newsItem.title} ${newsItem.contentSnippet || ""}`
-    const marketText = `${market.question} ${market.title || ""} ${market.description || ""}`
+    if (!market || !newsItem) {
+      return 0
+    }
+
+    const newsText = `${newsItem.title || ""} ${newsItem.contentSnippet || ""}`
+    const marketText = `${market.question || ""} ${market.title || ""} ${market.description || ""}`
 
     const newsTokens = new Set(this.normalizeText(newsText))
     const marketTokens = new Set(this.normalizeText(marketText))
@@ -197,16 +201,17 @@ export class NewsMatchingEngine {
     const boostScore = boostMatches * 0.2
 
     // Recency boost (newer news gets slight preference)
-    const newsAge = Date.now() - new Date(newsItem.pubDate).getTime()
+    const newsAge = Date.now() - new Date(newsItem.pubDate || Date.now()).getTime()
     const recencyBoost = Math.max(0, 1 - newsAge / (7 * 24 * 60 * 60 * 1000)) * 0.1 // 7 day decay
 
     // Liquidity boost (higher liquidity markets get preference)
-    const liquidityBoost = Math.min(market.liquidity_num / 10000, 1) * 0.1
+    const liquidityBoost = Math.min((market.liquidity_num || 0) / 10000, 1) * 0.1
 
-    // Tag matching boost
     let tagBoost = 0
-    if (newsItem.topic && market.tags.some((tag) => tag.includes(newsItem.topic!))) {
-      tagBoost = 0.15
+    if (newsItem.topic && market.tags && Array.isArray(market.tags)) {
+      if (market.tags.some((tag) => tag && tag.includes(newsItem.topic!))) {
+        tagBoost = 0.15
+      }
     }
 
     const finalScore = overlapScore + boostScore + recencyBoost + liquidityBoost + tagBoost
@@ -218,6 +223,10 @@ export class NewsMatchingEngine {
    * Find matching markets for a single news item
    */
   async findMatchesForNews(newsItem: NewsItem, markets?: PolymarketMarket[]): Promise<NewsMatch["matches"]> {
+    if (!newsItem) {
+      return []
+    }
+
     // Get markets if not provided
     if (!markets) {
       markets = await polymarket.getMarkets({
@@ -228,8 +237,10 @@ export class NewsMatchingEngine {
       })
     }
 
+    const validMarkets = (markets || []).filter((market) => market && typeof market === "object")
+
     // Score all markets against this news item
-    const scoredMatches = markets
+    const scoredMatches = validMarkets
       .map((market) => ({
         market,
         score: this.calculateScore(newsItem, market),
@@ -337,7 +348,7 @@ export class NewsMatchingEngine {
 
       // Filter news items that match the query
       const filteredNews = newsItems.filter((item) => {
-        const searchText = `${item.title} ${item.contentSnippet || ""}`.toLowerCase()
+        const searchText = `${item.title || ""} ${item.contentSnippet || ""}`.toLowerCase()
         return searchText.includes(query.toLowerCase())
       })
 

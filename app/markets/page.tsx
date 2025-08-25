@@ -1,103 +1,67 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MarketCard } from "@/components/market-card"
-import { Search, Grid, List, Zap } from "lucide-react"
+import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
-import type { PolymarketMarket } from "@/types"
+import { OddsCard } from "@/components/odds-card"
+import { FiltersBar } from "@/components/filters-bar"
+import { useMarkets, useEvents } from "@/lib/polymarket-client"
+import { config } from "@/lib/config"
+import type { MarketFilters } from "@/types"
 
-const SORT_OPTIONS = [
-  { value: "volume", label: "Volume" },
-  { value: "liquidity", label: "Liquidity" },
-  { value: "end_date", label: "End Date" },
-]
-
-const LIQUIDITY_FILTERS = [
-  { value: "all", label: "All Liquidity" },
-  { value: "1000", label: "$1K+" },
-  { value: "10000", label: "$10K+" },
-  { value: "100000", label: "$100K+" },
-]
+const ITEMS_PER_PAGE = 24
 
 export default function MarketsPage() {
-  const [markets, setMarkets] = useState<PolymarketMarket[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTag, setSelectedTag] = useState("all")
-  const [sortBy, setSortBy] = useState("volume")
-  const [liquidityFilter, setLiquidityFilter] = useState("all")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [filters, setFilters] = useState<MarketFilters>({
+    order: "liquidity",
+    ascending: false,
+    active: true,
+    limit: ITEMS_PER_PAGE,
+    offset: 0,
+  })
 
-  const fetchMarkets = async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        limit: "100",
-        order: sortBy,
-        ascending: "false",
-        ...(liquidityFilter !== "all" && { liquidity_min: liquidityFilter }),
-      })
+  const [currentPage, setCurrentPage] = useState(1)
 
-      const response = await fetch(`/api/polymarket/markets?${params}`)
-      const data = await response.json()
+  const { markets, isLoading, isError } = useMarkets(filters)
+  const { events } = useEvents()
 
-      setMarkets(data || [])
-
-      // Extract unique tags
-      const tags = new Set<string>()
-      data.forEach((market: PolymarketMarket) => {
-        market.tags.forEach((tag: string) => tags.add(tag))
-      })
-      setAvailableTags(Array.from(tags).sort())
-    } catch (error) {
-      console.error("Error fetching markets:", error)
-    } finally {
-      setLoading(false)
-    }
+  const handleFiltersChange = (newFilters: MarketFilters) => {
+    setFilters({ ...newFilters, limit: ITEMS_PER_PAGE, offset: 0 })
+    setCurrentPage(1)
   }
 
-  useEffect(() => {
-    fetchMarkets()
-  }, [sortBy, liquidityFilter])
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    setFilters({ ...filters, offset: (page - 1) * ITEMS_PER_PAGE })
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
-  const filteredMarkets = markets.filter((market) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      market.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      market.description?.toLowerCase().includes(searchQuery.toLowerCase())
-
-    const matchesTag = selectedTag === "all" || market.tags.includes(selectedTag)
-
-    return matchesSearch && matchesTag
-  })
+  const totalPages = Math.ceil((markets.length || 0) / ITEMS_PER_PAGE)
+  const hasNextPage = markets.length === ITEMS_PER_PAGE // If we got full page, there might be more
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border">
+      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Link href="/" className="flex items-center space-x-2">
-                <Zap className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold">BetTheNews</span>
+                <BarChart3 className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold">Polymarket Live</span>
               </Link>
             </div>
             <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/news-to-bets" className="text-sm hover:text-primary">
-                News → Bets
-              </Link>
-              <Link href="/guides" className="text-sm hover:text-primary">
-                Guides
+              <Link href="/breaking" className="text-sm hover:text-primary transition-colors">
+                Breaking
               </Link>
             </nav>
-            <Button asChild>
-              <Link href="/go/pm">Start Betting</Link>
+            <Button asChild className="hover:scale-105 transition-transform">
+              <Link href={config.affiliate.url} target="_blank" rel="noopener noreferrer">
+                Start Trading
+              </Link>
             </Button>
           </div>
         </div>
@@ -107,126 +71,159 @@ export default function MarketsPage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">All Markets</h1>
-          <p className="text-muted-foreground">Explore all active prediction markets with real-time prices and data.</p>
+          <p className="text-muted-foreground">
+            Explore prediction markets with real-time odds, volume, and liquidity data. Updated every 20 seconds.
+          </p>
         </div>
 
-        {/* Filters and Controls */}
-        <div className="mb-6 space-y-4">
-          {/* Search and View Toggle */}
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search markets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+        {/* Filters */}
+        <div className="mb-8">
+          <FiltersBar filters={filters} onFiltersChange={handleFiltersChange} events={events} />
+        </div>
+
+        {/* Results Summary */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              {isLoading ? (
+                "Loading markets..."
+              ) : isError ? (
+                "Error loading markets"
+              ) : (
+                <>
+                  Showing {markets.length} markets
+                  {filters.search && ` for "${filters.search}"`}
+                  {filters.category && ` in ${filters.category}`}
+                </>
+              )}
             </div>
-            <div className="flex border rounded-lg">
-              <Button variant={viewMode === "grid" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("grid")}>
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" onClick={() => setViewMode("list")}>
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-4">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={liquidityFilter} onValueChange={setLiquidityFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Liquidity" />
-              </SelectTrigger>
-              <SelectContent>
-                {LIQUIDITY_FILTERS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Tag Filters */}
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={selectedTag === "all" ? "default" : "secondary"}
-              className="cursor-pointer"
-              onClick={() => setSelectedTag("all")}
-            >
-              All
-            </Badge>
-            {availableTags.slice(0, 10).map((tag) => (
-              <Badge
-                key={tag}
-                variant={selectedTag === tag ? "default" : "secondary"}
-                className="cursor-pointer"
-                onClick={() => setSelectedTag(tag)}
-              >
-                {tag}
+            {!isLoading && !isError && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Live
               </Badge>
-            ))}
+            )}
           </div>
 
-          {/* Results Count */}
           <div className="text-sm text-muted-foreground">
-            {loading ? "Loading..." : `${filteredMarkets.length} markets found`}
+            Page {currentPage} {hasNextPage && `of ${currentPage}+`}
           </div>
         </div>
 
-        {/* Markets Grid/List */}
-        {loading ? (
-          <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+        {/* Markets Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+              <div key={i} className="h-64 bg-muted animate-pulse rounded-xl loading-shimmer" />
             ))}
           </div>
-        ) : filteredMarkets.length === 0 ? (
+        ) : isError ? (
           <div className="text-center py-12">
+            <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Failed to load markets</h3>
+            <p className="text-muted-foreground mb-4">There was an error loading market data. Please try again.</p>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        ) : markets.length === 0 ? (
+          <div className="text-center py-12">
+            <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <h3 className="text-lg font-semibold mb-2">No markets found</h3>
-            <p className="text-muted-foreground mb-4">Try adjusting your search or filters.</p>
+            <p className="text-muted-foreground mb-4">
+              Try adjusting your search terms or filters to find more markets.
+            </p>
             <Button
               variant="outline"
-              onClick={() => {
-                setSearchQuery("")
-                setSelectedTag("all")
-                setLiquidityFilter("all")
-              }}
+              onClick={() =>
+                handleFiltersChange({
+                  order: "liquidity",
+                  ascending: false,
+                  active: true,
+                  limit: ITEMS_PER_PAGE,
+                  offset: 0,
+                })
+              }
             >
-              Clear filters
+              Clear Filters
             </Button>
           </div>
         ) : (
-          <div className={`grid gap-6 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
-            {filteredMarkets.map((market) => (
-              <MarketCard key={market.id} market={market} showDescription={viewMode === "list"} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+              {markets.map((market) => (
+                <OddsCard key={market.id} market={market} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {(currentPage > 1 || hasNextPage) && (
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="bg-transparent"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {currentPage > 2 && (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => handlePageChange(1)}>
+                        1
+                      </Button>
+                      {currentPage > 3 && <span className="text-muted-foreground">...</span>}
+                    </>
+                  )}
+
+                  {currentPage > 1 && (
+                    <Button variant="ghost" size="sm" onClick={() => handlePageChange(currentPage - 1)}>
+                      {currentPage - 1}
+                    </Button>
+                  )}
+
+                  <Button variant="default" size="sm" disabled>
+                    {currentPage}
+                  </Button>
+
+                  {hasNextPage && (
+                    <Button variant="ghost" size="sm" onClick={() => handlePageChange(currentPage + 1)}>
+                      {currentPage + 1}
+                    </Button>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!hasNextPage}
+                  className="bg-transparent"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Load More */}
-        {filteredMarkets.length >= 100 && (
-          <div className="text-center mt-8">
-            <Button variant="outline" onClick={fetchMarkets}>
-              Load More Markets
-            </Button>
-          </div>
-        )}
+        {/* CTA Section */}
+        <div className="mt-16 text-center py-12 bg-muted/30 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">Ready to start trading?</h2>
+          <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+            Join Polymarket and trade on real-world events with the world's largest prediction market platform.
+          </p>
+          <Button size="lg" asChild className="hover:scale-105 transition-transform">
+            <Link href={config.affiliate.url} target="_blank" rel="noopener noreferrer">
+              Start Trading on Polymarket
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   )
