@@ -1,4 +1,4 @@
-import type { ContentPage, ContentPageInput, Session } from "@/types"
+import type { ContentPage, ContentPageInput, Session, Category } from "@/types"
 
 // Simple in-memory content store (replace with database in production)
 const contentPages: Map<string, ContentPage> = new Map()
@@ -7,6 +7,8 @@ export async function createContentPage(input: ContentPageInput, author: Session
   const id = `content-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   const slug = generateSlug(input.title)
   const now = new Date()
+
+  const readingTime = calculateReadingTime(input.content)
 
   const contentPage: ContentPage = {
     id,
@@ -24,6 +26,10 @@ export async function createContentPage(input: ContentPageInput, author: Session
     category: input.category,
     seoTitle: input.seoTitle,
     seoDescription: input.seoDescription,
+    polymarketUrl: input.polymarketUrl,
+    polymarketId: input.polymarketId,
+    featuredImage: input.featuredImage,
+    readingTime,
   }
 
   contentPages.set(id, contentPage)
@@ -43,11 +49,14 @@ export async function updateContentPage(
     throw new Error("Unauthorized to edit this content")
   }
 
+  const readingTime = input.content ? calculateReadingTime(input.content) : existing.readingTime
+
   const updated: ContentPage = {
     ...existing,
     ...input,
     updatedAt: new Date(),
     publishedAt: input.status === "published" && !existing.publishedAt ? new Date() : existing.publishedAt,
+    readingTime,
   }
 
   if (input.title) {
@@ -85,6 +94,12 @@ export async function getContentPagesByAuthor(authorId: string): Promise<Content
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
 }
 
+export async function getContentPagesByCategory(category: Category): Promise<ContentPage[]> {
+  return Array.from(contentPages.values())
+    .filter((page) => page.category === category && page.status === "published")
+    .sort((a, b) => b.publishedAt!.getTime() - a.publishedAt!.getTime())
+}
+
 export async function deleteContentPage(id: string, author: Session): Promise<boolean> {
   const existing = contentPages.get(id)
   if (!existing) return false
@@ -104,4 +119,10 @@ function generateSlug(title: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .trim()
+}
+
+function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200
+  const wordCount = content.split(/\s+/).length
+  return Math.ceil(wordCount / wordsPerMinute)
 }

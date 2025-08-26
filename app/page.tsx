@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, BarChart3, Clock } from "lucide-react"
+import { TrendingUp, BarChart3, Clock, FileText, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { OddsCard } from "@/components/odds-card"
 import { BreakingItem } from "@/components/breaking-item"
 import { config } from "@/lib/config"
+import { getAllContentPages } from "@/lib/content"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatDistanceToNow } from "date-fns"
 
 async function getTrendingMarkets() {
   try {
@@ -60,8 +63,22 @@ async function getBreakingNews() {
   }
 }
 
+async function getFeaturedContent() {
+  try {
+    const content = await getAllContentPages("published")
+    return content.slice(0, 3) // Get latest 3 published articles
+  } catch (error) {
+    console.error("Error fetching featured content:", error)
+    return []
+  }
+}
+
 export default async function HomePage() {
-  const [trendingMarkets, breakingNews] = await Promise.all([getTrendingMarkets(), getBreakingNews()])
+  const [trendingMarkets, breakingNews, featuredContent] = await Promise.all([
+    getTrendingMarkets(),
+    getBreakingNews(),
+    getFeaturedContent(),
+  ])
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,6 +96,9 @@ export default async function HomePage() {
               </Link>
               <Link href="/breaking" className="text-sm hover:text-primary transition-colors">
                 Breaking
+              </Link>
+              <Link href="/content" className="text-sm hover:text-primary transition-colors">
+                Analysis
               </Link>
             </nav>
             <Button asChild className="hover:scale-105 transition-transform">
@@ -149,6 +169,76 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+
+      {featuredContent.length > 0 && (
+        <section className="py-16 px-4 bg-muted/20">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">Expert Analysis</h2>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <FileText className="w-3 h-3" />
+                  Featured
+                </Badge>
+              </div>
+              <Button variant="outline" asChild className="hover:scale-105 transition-transform bg-transparent">
+                <Link href="/content">View All Analysis</Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {featuredContent.map((article: any) => (
+                <Card key={article.id} className="hover:shadow-lg hover:scale-105 transition-all duration-300">
+                  {article.featuredImage && (
+                    <div className="aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden rounded-t-lg">
+                      <img
+                        src={article.featuredImage || "/placeholder.svg"}
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      {article.category && (
+                        <Badge variant="outline" className="text-xs">
+                          {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
+                        </Badge>
+                      )}
+                      {article.readingTime && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.readingTime} min read
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-lg leading-tight">
+                      <Link
+                        href={`/content/${article.slug}`}
+                        className="hover:text-primary transition-colors line-clamp-2"
+                      >
+                        {article.title}
+                      </Link>
+                    </CardTitle>
+                    {article.excerpt && <p className="text-muted-foreground text-sm line-clamp-2">{article.excerpt}</p>}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                      <span>{article.authorName}</span>
+                      <span>{formatDistanceToNow(article.publishedAt || article.createdAt)} ago</span>
+                    </div>
+                    <Button asChild size="sm" className="w-full">
+                      <Link href={`/content/${article.slug}`}>
+                        Read Analysis
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Breaking Moves Section */}
       <section className="py-16 px-4 bg-muted/30">
@@ -225,26 +315,26 @@ export default async function HomePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-3">Trade</h3>
+              <h3 className="font-semibold mb-3">Analysis</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link
-                    href={config.affiliate.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Start Trading
+                  <Link href="/content" className="hover:text-primary transition-colors">
+                    All Analysis
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    href="https://polymarket.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Polymarket.com
+                  <Link href="/content?category=politics" className="hover:text-primary transition-colors">
+                    Politics
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/content?category=sports" className="hover:text-primary transition-colors">
+                    Sports
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/content?category=entertainment" className="hover:text-primary transition-colors">
+                    Entertainment
                   </Link>
                 </li>
               </ul>

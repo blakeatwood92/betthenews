@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Zap, SearchIcon, CalendarIcon, UserIcon } from "lucide-react"
+import { TrendingUp, SearchIcon, CalendarIcon, UserIcon, ExternalLink, Clock } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { CATEGORIES } from "@/types"
@@ -39,27 +39,24 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Zap className="h-6 w-6 text-primary" />
+              <TrendingUp className="h-6 w-6 text-primary" />
               <Link href="/" className="text-xl font-bold hover:text-primary transition-colors">
-                BetTheNews
+                Polymarket Live
               </Link>
             </div>
             <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/news-to-bets" className="text-sm hover:text-primary transition-colors">
-                News → Bets
-              </Link>
               <Link href="/markets" className="text-sm hover:text-primary transition-colors">
                 Markets
+              </Link>
+              <Link href="/breaking" className="text-sm hover:text-primary transition-colors">
+                Breaking
               </Link>
               <Link href="/content" className="text-sm text-primary font-medium">
                 Content
               </Link>
-              <Link href="/guides" className="text-sm hover:text-primary transition-colors">
-                Guides
-              </Link>
             </nav>
             <Button asChild className="hover:scale-105 transition-transform">
-              <Link href="/go/pm">Start Betting</Link>
+              <Link href="/go/pm">Bet Now</Link>
             </Button>
           </div>
         </div>
@@ -67,7 +64,7 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">Content & Insights</h1>
+          <h1 className="text-4xl font-bold mb-4">Market Analysis & Insights</h1>
           <p className="text-xl text-muted-foreground">
             Expert analysis, market insights, and educational content about prediction markets and current events.
           </p>
@@ -92,7 +89,6 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="general">General</SelectItem>
               {CATEGORIES.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -117,15 +113,35 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {content.map((page) => (
-              <Card key={page.id} className="hover:shadow-lg hover:scale-105 transition-all duration-300">
+              <Card
+                key={page.id}
+                className="hover:shadow-lg hover:scale-105 transition-all duration-300 overflow-hidden"
+              >
+                {page.featuredImage && (
+                  <div className="aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                    <img
+                      src={page.featuredImage || "/placeholder.svg"}
+                      alt={page.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      {page.category && (
-                        <Badge variant="outline" className="mb-2">
-                          {page.category.charAt(0).toUpperCase() + page.category.slice(1)}
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2 mb-2">
+                        {page.category && (
+                          <Badge variant="outline">
+                            {page.category.charAt(0).toUpperCase() + page.category.slice(1)}
+                          </Badge>
+                        )}
+                        {page.polymarketUrl && (
+                          <Badge variant="secondary" className="text-xs">
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Market
+                          </Badge>
+                        )}
+                      </div>
                       <CardTitle className="text-lg leading-tight">
                         <Link
                           href={`/content/${page.slug}`}
@@ -144,9 +160,17 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
                       <UserIcon className="w-4 h-4" />
                       <span>{page.authorName}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <CalendarIcon className="w-4 h-4" />
-                      <span>{formatDistanceToNow(page.publishedAt || page.createdAt)} ago</span>
+                    <div className="flex items-center gap-2">
+                      {page.readingTime && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{page.readingTime} min</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <CalendarIcon className="w-4 h-4" />
+                        <span>{formatDistanceToNow(page.publishedAt || page.createdAt)} ago</span>
+                      </div>
                     </div>
                   </div>
 
@@ -166,7 +190,7 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
                   )}
 
                   <Button asChild className="w-full">
-                    <Link href={`/content/${page.slug}`}>Read More</Link>
+                    <Link href={`/content/${page.slug}`}>Read Analysis</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -181,10 +205,10 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Zap className="h-5 w-5 text-primary" />
-                <span className="font-bold">BetTheNews</span>
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <span className="font-bold">Polymarket Live</span>
               </div>
-              <p className="text-sm text-muted-foreground">If it's in the news, it's on the board.</p>
+              <p className="text-sm text-muted-foreground">Real-time prediction market data and analysis.</p>
             </div>
             <div>
               <h3 className="font-semibold mb-3">Markets</h3>
@@ -195,28 +219,28 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/topic/politics" className="hover:text-primary transition-colors">
-                    Politics
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/topic/economy" className="hover:text-primary transition-colors">
-                    Economy
+                  <Link href="/breaking" className="hover:text-primary transition-colors">
+                    Breaking News
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-3">Learn</h3>
+              <h3 className="font-semibold mb-3">Content</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="/guides" className="hover:text-primary transition-colors">
-                    Guides
+                  <Link href="/content?category=politics" className="hover:text-primary transition-colors">
+                    Politics
                   </Link>
                 </li>
                 <li>
-                  <Link href="/content" className="hover:text-primary transition-colors">
-                    Content & Insights
+                  <Link href="/content?category=sports" className="hover:text-primary transition-colors">
+                    Sports
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/content?category=entertainment" className="hover:text-primary transition-colors">
+                    Entertainment
                   </Link>
                 </li>
               </ul>
@@ -239,7 +263,7 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
           </div>
           <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
             <p>
-              BetTheNews is an independent information and affiliate website. We do not provide trading services or
+              Polymarket Live is an independent information and affiliate website. We do not provide trading services or
               financial advice. 18+ only.
             </p>
           </div>

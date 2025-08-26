@@ -41,7 +41,7 @@ export interface Topic {
   queries: string[]
 }
 
-export const CATEGORIES = ["world", "tech", "economy", "sports", "politics"] as const
+export const CATEGORIES = ["news", "entertainment", "politics", "sports", "tech", "economy"] as const
 export type Category = (typeof CATEGORIES)[number]
 
 export interface User {
@@ -72,9 +72,13 @@ export interface ContentPage {
   updatedAt: Date
   publishedAt?: Date
   tags: string[]
-  category?: Category
+  category: Category // Made category required instead of optional
   seoTitle?: string
   seoDescription?: string
+  polymarketUrl?: string // Link to related Polymarket bet
+  polymarketId?: string // Market ID for tracking
+  featuredImage?: string // Featured image URL
+  readingTime?: number // Estimated reading time in minutes
 }
 
 export interface ContentPageInput {
@@ -83,9 +87,12 @@ export interface ContentPageInput {
   excerpt?: string
   status: "draft" | "published"
   tags: string[]
-  category?: Category
+  category: Category // Made category required
   seoTitle?: string
   seoDescription?: string
+  polymarketUrl?: string
+  polymarketId?: string
+  featuredImage?: string
 }
 
 export interface PolymarketMarketNormalized {

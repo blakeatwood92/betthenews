@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
+import { X, ExternalLink, ImageIcon, Clock } from "lucide-react"
 import type { ContentPage, ContentPageInput } from "@/types"
 import { CATEGORIES } from "@/types"
 
@@ -29,12 +29,19 @@ export default function ContentEditor({ initialData }: ContentEditorProps) {
     excerpt: initialData?.excerpt || "",
     status: initialData?.status || "draft",
     tags: initialData?.tags || [],
-    category: initialData?.category || "general", // Updated default value to be a non-empty string
+    category: initialData?.category || "news",
     seoTitle: initialData?.seoTitle || "",
     seoDescription: initialData?.seoDescription || "",
+    polymarketUrl: initialData?.polymarketUrl || "",
+    polymarketId: initialData?.polymarketId || "",
+    featuredImage: initialData?.featuredImage || "",
   })
 
   const [newTag, setNewTag] = useState("")
+
+  const seoTitleLength = formData.seoTitle?.length || 0
+  const seoDescLength = formData.seoDescription?.length || 0
+  const excerptLength = formData.excerpt?.length || 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +97,12 @@ export default function ContentEditor({ initialData }: ContentEditorProps) {
     }
   }
 
+  const calculateReadingTime = (content: string) => {
+    const wordsPerMinute = 200
+    const wordCount = content.split(/\s+/).length
+    return Math.ceil(wordCount / wordsPerMinute)
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -111,18 +124,26 @@ export default function ContentEditor({ initialData }: ContentEditorProps) {
               </div>
 
               <div>
-                <Label htmlFor="excerpt">Excerpt</Label>
+                <Label htmlFor="excerpt">
+                  Excerpt <span className="text-sm text-gray-500">({excerptLength}/160 chars)</span>
+                </Label>
                 <Textarea
                   id="excerpt"
                   value={formData.excerpt}
                   onChange={(e) => setFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
-                  placeholder="Brief description of the content"
+                  placeholder="Brief description of the content (recommended for SEO)"
                   rows={2}
+                  maxLength={160}
                 />
               </div>
 
               <div>
-                <Label htmlFor="content">Content *</Label>
+                <Label htmlFor="content">
+                  Content *
+                  <span className="text-sm text-gray-500 ml-2">
+                    <Clock className="w-3 h-3 inline mr-1" />~{calculateReadingTime(formData.content)} min read
+                  </span>
+                </Label>
                 <Textarea
                   id="content"
                   value={formData.content}
@@ -142,24 +163,86 @@ export default function ContentEditor({ initialData }: ContentEditorProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="seoTitle">SEO Title</Label>
+                <Label htmlFor="seoTitle">
+                  SEO Title{" "}
+                  <span className={`text-sm ${seoTitleLength > 60 ? "text-red-500" : "text-gray-500"}`}>
+                    ({seoTitleLength}/60 chars)
+                  </span>
+                </Label>
                 <Input
                   id="seoTitle"
                   value={formData.seoTitle}
                   onChange={(e) => setFormData((prev) => ({ ...prev, seoTitle: e.target.value }))}
-                  placeholder="SEO optimized title"
+                  placeholder="SEO optimized title (leave empty to use main title)"
+                  maxLength={60}
                 />
+                <p className="text-xs text-gray-500 mt-1">Optimal length: 50-60 characters</p>
               </div>
 
               <div>
-                <Label htmlFor="seoDescription">SEO Description</Label>
+                <Label htmlFor="seoDescription">
+                  SEO Description{" "}
+                  <span className={`text-sm ${seoDescLength > 160 ? "text-red-500" : "text-gray-500"}`}>
+                    ({seoDescLength}/160 chars)
+                  </span>
+                </Label>
                 <Textarea
                   id="seoDescription"
                   value={formData.seoDescription}
                   onChange={(e) => setFormData((prev) => ({ ...prev, seoDescription: e.target.value }))}
-                  placeholder="SEO meta description"
+                  placeholder="SEO meta description (leave empty to use excerpt)"
                   rows={3}
+                  maxLength={160}
                 />
+                <p className="text-xs text-gray-500 mt-1">Optimal length: 150-160 characters</p>
+              </div>
+
+              <div>
+                <Label htmlFor="featuredImage">
+                  <ImageIcon className="w-4 h-4 inline mr-1" />
+                  Featured Image URL
+                </Label>
+                <Input
+                  id="featuredImage"
+                  value={formData.featuredImage}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, featuredImage: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                  type="url"
+                />
+                <p className="text-xs text-gray-500 mt-1">Used for social media sharing and article previews</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <ExternalLink className="w-4 h-4 inline mr-2" />
+                Polymarket Integration
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="polymarketUrl">Polymarket Bet URL</Label>
+                <Input
+                  id="polymarketUrl"
+                  value={formData.polymarketUrl}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, polymarketUrl: e.target.value }))}
+                  placeholder="https://polymarket.com/event/..."
+                  type="url"
+                />
+                <p className="text-xs text-gray-500 mt-1">Link to the related Polymarket prediction</p>
+              </div>
+
+              <div>
+                <Label htmlFor="polymarketId">Market ID (Optional)</Label>
+                <Input
+                  id="polymarketId"
+                  value={formData.polymarketId}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, polymarketId: e.target.value }))}
+                  placeholder="Market ID for tracking"
+                />
+                <p className="text-xs text-gray-500 mt-1">Used for analytics and market data integration</p>
               </div>
             </CardContent>
           </Card>
@@ -188,17 +271,15 @@ export default function ContentEditor({ initialData }: ContentEditorProps) {
               </div>
 
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Category *</Label>
                 <Select
-                  value={formData.category || "general"}
+                  value={formData.category}
                   onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value as any }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="general">General</SelectItem>{" "}
-                    {/* Updated default value to be a non-empty string */}
                     {CATEGORIES.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -251,6 +332,26 @@ export default function ContentEditor({ initialData }: ContentEditorProps) {
                   ))}
                 </div>
               )}
+
+              <div className="text-xs text-gray-500">
+                <p className="font-medium mb-1">Suggested tags:</p>
+                <div className="flex flex-wrap gap-1">
+                  {["polymarket", "prediction-market", "betting", "odds", "analysis"].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        if (!formData.tags.includes(tag)) {
+                          setFormData((prev) => ({ ...prev, tags: [...prev.tags, tag] }))
+                        }
+                      }}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

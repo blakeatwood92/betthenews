@@ -11,7 +11,7 @@ export const TOPICS: Topic[] = [
   {
     slug: "putin-visit",
     title: "Putin's Visit",
-    category: "world",
+    category: "news", // Updated from "world" to "news"
     queries: ["putin visit", "kremlin visit", "putin summit", "north korea putin"],
   },
 
@@ -36,6 +36,20 @@ export const TOPICS: Topic[] = [
     title: "Epstein Files",
     category: "politics",
     queries: ["epstein files", "jeffrey epstein documents", "epstein client list"],
+  },
+
+  {
+    slug: "celebrity-news",
+    title: "Celebrity News",
+    category: "entertainment",
+    queries: ["celebrity scandal", "hollywood news", "entertainment awards"],
+  },
+
+  {
+    slug: "streaming-wars",
+    title: "Streaming Wars",
+    category: "entertainment",
+    queries: ["netflix vs disney", "streaming subscriber", "content wars"],
   },
 ]
 
