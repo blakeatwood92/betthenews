@@ -9,6 +9,6 @@ export const config = {
   },
   api: {
     revalidateInterval: 20, // seconds
-    pollInterval: 20000, // milliseconds
+    pollInterval: 300000, // 5 minutes instead of 20 seconds
   },
 }

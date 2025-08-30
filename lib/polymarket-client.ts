@@ -1,6 +1,5 @@
 import useSWR from "swr"
 import type { PolymarketMarketNormalized, PolymarketEvent, BreakingItem, MarketFilters } from "@/types"
-import { config } from "./config"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -14,8 +13,11 @@ export function useMarkets(filters: MarketFilters = {}) {
   })
 
   const { data, error, mutate } = useSWR<PolymarketMarketNormalized[]>(`/api/pm/markets?${params}`, fetcher, {
-    refreshInterval: config.api.pollInterval,
+    refreshInterval: 0, // Disable automatic polling
     revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    errorRetryCount: 1, // Limit retries
+    errorRetryInterval: 30000, // 30 seconds between retries
   })
 
   return {
@@ -28,8 +30,9 @@ export function useMarkets(filters: MarketFilters = {}) {
 
 export function useEvents() {
   const { data, error } = useSWR<PolymarketEvent[]>("/api/pm/events", fetcher, {
-    refreshInterval: 300000, // 5 minutes
+    refreshInterval: 0,
     revalidateOnFocus: false,
+    revalidateOnReconnect: false,
   })
 
   return {
@@ -41,8 +44,11 @@ export function useEvents() {
 
 export function useBreaking() {
   const { data, error, mutate } = useSWR<BreakingItem[]>("/api/breaking", fetcher, {
-    refreshInterval: 60000, // 1 minute
+    refreshInterval: 0,
     revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    errorRetryCount: 1,
+    errorRetryInterval: 60000, // 1 minute between retries
   })
 
   return {

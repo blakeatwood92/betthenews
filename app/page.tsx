@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, BarChart3, Clock, FileText, ArrowRight } from "lucide-react"
+import { TrendingUp, BarChart3, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { OddsCard } from "@/components/odds-card"
 import { BreakingItem } from "@/components/breaking-item"
@@ -144,10 +144,7 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">Trending Markets</h2>
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Live
-              </Badge>
+              <Badge variant="secondary">Updated every 20s</Badge>
             </div>
             <Button variant="outline" asChild className="hover:scale-105 transition-transform bg-transparent">
               <Link href="/markets">View All Markets</Link>
@@ -176,8 +173,7 @@ export default async function HomePage() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold">Expert Analysis</h2>
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
+                <Badge variant="outline" className="text-xs">
                   Featured
                 </Badge>
               </div>
@@ -246,10 +242,7 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">Breaking Moves (24h)</h2>
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                Hot
-              </Badge>
+              <Badge variant="secondary">Updated every 20s</Badge>
             </div>
             <Button variant="outline" asChild className="hover:scale-105 transition-transform bg-transparent">
               <Link href="/breaking">View All Breaking</Link>
