@@ -1,95 +1,106 @@
 import { NextResponse } from "next/server"
 
-const GAMMA_BASE = "https://gamma-api.polymarket.com"
-
 export const runtime = "edge"
+
+const STATIC_MARKETS = [
+  {
+    id: "will-trump-win-2024",
+    slug: "will-trump-win-2024",
+    title: "Will Donald Trump win the 2024 US Presidential Election?",
+    eventTitle: "2024 US Presidential Election",
+    yesPrice: 0.52,
+    noPrice: 0.48,
+    liquidity: 2500000,
+    volume: 15000000,
+    endDate: "2024-11-05T23:59:59Z",
+    url: "https://polymarket.com/event/will-trump-win-2024",
+  },
+  {
+    id: "bitcoin-100k-2024",
+    slug: "bitcoin-100k-2024",
+    title: "Will Bitcoin reach $100,000 by end of 2024?",
+    eventTitle: "Bitcoin Price Predictions",
+    yesPrice: 0.35,
+    noPrice: 0.65,
+    liquidity: 1800000,
+    volume: 8500000,
+    endDate: "2024-12-31T23:59:59Z",
+    url: "https://polymarket.com/event/bitcoin-100k-2024",
+  },
+  {
+    id: "ai-agi-2025",
+    slug: "ai-agi-2025",
+    title: "Will AGI be achieved by a major AI lab in 2025?",
+    eventTitle: "Artificial General Intelligence",
+    yesPrice: 0.15,
+    noPrice: 0.85,
+    liquidity: 950000,
+    volume: 3200000,
+    endDate: "2025-12-31T23:59:59Z",
+    url: "https://polymarket.com/event/ai-agi-2025",
+  },
+  {
+    id: "fed-rate-cut-2024",
+    slug: "fed-rate-cut-2024",
+    title: "Will the Fed cut interest rates in Q4 2024?",
+    eventTitle: "Federal Reserve Policy",
+    yesPrice: 0.78,
+    noPrice: 0.22,
+    liquidity: 1200000,
+    volume: 4800000,
+    endDate: "2024-12-31T23:59:59Z",
+    url: "https://polymarket.com/event/fed-rate-cut-2024",
+  },
+  {
+    id: "spacex-mars-2026",
+    slug: "spacex-mars-2026",
+    title: "Will SpaceX successfully land humans on Mars by 2026?",
+    eventTitle: "Space Exploration",
+    yesPrice: 0.08,
+    noPrice: 0.92,
+    liquidity: 750000,
+    volume: 2100000,
+    endDate: "2026-12-31T23:59:59Z",
+    url: "https://polymarket.com/event/spacex-mars-2026",
+  },
+  {
+    id: "climate-target-2024",
+    slug: "climate-target-2024",
+    title: "Will global CO2 emissions decrease in 2024?",
+    eventTitle: "Climate Change",
+    yesPrice: 0.42,
+    noPrice: 0.58,
+    liquidity: 680000,
+    volume: 1900000,
+    endDate: "2024-12-31T23:59:59Z",
+    url: "https://polymarket.com/event/climate-target-2024",
+  },
+]
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
 
-  // Validate and set defaults for query parameters
-  const allowedOrders = ["liquidity", "volume", "endDate"]
+  const markets = [...STATIC_MARKETS]
+
+  const limit = Math.min(Number.parseInt(searchParams.get("limit") || "12"), 100)
+  const offset = Math.max(Number.parseInt(searchParams.get("offset") || "0"), 0)
   const order = searchParams.get("order") || "liquidity"
-  const validOrder = allowedOrders.includes(order) ? order : "liquidity"
 
-  const sanitizeNumber = (value: string | null, defaultValue: string, max?: number) => {
-    if (!value) return defaultValue
-    const num = Number.parseFloat(value)
-    if (isNaN(num) || num < 0) return defaultValue
-    const sanitized = Math.floor(num)
-    return max && sanitized > max ? max.toString() : sanitized.toString()
+  // Sort markets based on order parameter
+  if (order === "volume") {
+    markets.sort((a, b) => b.volume - a.volume)
+  } else if (order === "endDate") {
+    markets.sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+  } else {
+    markets.sort((a, b) => b.liquidity - a.liquidity)
   }
 
-  const params = new URLSearchParams({
-    limit: sanitizeNumber(searchParams.get("limit"), "60", 100),
-    offset: sanitizeNumber(searchParams.get("offset"), "0", 10000),
-    order: validOrder === "endDate" ? "end_date" : validOrder,
-    ascending: searchParams.get("ascending") === "true" ? "true" : "false",
-    active: searchParams.get("active") === "false" ? "false" : "true",
-    closed: searchParams.get("closed") === "true" ? "true" : "false",
+  // Apply pagination
+  const paginatedMarkets = markets.slice(offset, offset + limit)
+
+  return NextResponse.json(paginatedMarkets, {
+    headers: {
+      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+    },
   })
-
-  const liquidityMin = searchParams.get("liquidity_num_min")
-  if (liquidityMin && !isNaN(Number.parseFloat(liquidityMin)) && Number.parseFloat(liquidityMin) >= 0) {
-    params.set("liquidity_num_min", sanitizeNumber(liquidityMin, "0", 1000000))
-  }
-
-  const volumeMin = searchParams.get("volume_num_min")
-  if (volumeMin && !isNaN(Number.parseFloat(volumeMin)) && Number.parseFloat(volumeMin) >= 0) {
-    params.set("volume_num_min", sanitizeNumber(volumeMin, "0", 1000000))
-  }
-
-  const tagId = searchParams.get("tag_id")
-  if (tagId && /^[a-zA-Z0-9][a-zA-Z0-9-_]{0,49}$/.test(tagId)) {
-    params.set("tag_id", tagId)
-  }
-
-  try {
-    const apiUrl = `${GAMMA_BASE}/markets?${params.toString()}`
-    console.log("[v0] Fetching from Polymarket API:", apiUrl)
-
-    const response = await fetch(apiUrl, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "PolymarketLive/1.0",
-      },
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unknown error")
-      console.error("[v0] Polymarket API error:", response.status, response.statusText, errorText)
-      throw new Error(`Polymarket API error: ${response.status} - ${errorText}`)
-    }
-
-    const data = await response.json()
-    console.log("[v0] Received", data?.length || 0, "markets from Polymarket API")
-
-    // Normalize the response to match our interface
-    const normalizedMarkets = (data || []).map((market: any) => ({
-      id: market.id || market.condition_id || `market-${Date.now()}-${Math.random()}`,
-      slug: market.slug || market.id,
-      title: market.question || market.title || "Unknown Market",
-      eventTitle: market.event?.title || market.eventTitle || "",
-      yesPrice: market.outcomes?.[0]?.price || market.yesPrice || 0.5,
-      noPrice: market.outcomes?.[1]?.price || market.noPrice || 0.5,
-      liquidity: market.liquidity || market.liquidity_num || 0,
-      volume: market.volume || market.volume_num || 0,
-      endDate: market.end_date || market.endDate || new Date().toISOString(),
-      url: `https://polymarket.com/event/${market.slug || market.id}`,
-    }))
-
-    return NextResponse.json(normalizedMarkets, {
-      headers: {
-        "Cache-Control": "public, s-maxage=20, stale-while-revalidate=60",
-      },
-    })
-  } catch (error) {
-    console.error("[v0] Polymarket markets API error:", error)
-    // Return empty array instead of error to prevent page crashes
-    return NextResponse.json([], {
-      headers: {
-        "Cache-Control": "public, s-maxage=5, stale-while-revalidate=10",
-      },
-    })
-  }
 }
