@@ -12,39 +12,53 @@ export async function GET(request: Request) {
   const order = searchParams.get("order") || "liquidity"
   const validOrder = allowedOrders.includes(order) ? order : "liquidity"
 
+  const sanitizeNumber = (value: string | null, defaultValue: string, max?: number) => {
+    if (!value) return defaultValue
+    const num = Number.parseFloat(value)
+    if (isNaN(num) || num < 0) return defaultValue
+    const sanitized = Math.floor(num)
+    return max && sanitized > max ? max.toString() : sanitized.toString()
+  }
+
   const params = new URLSearchParams({
-    limit: searchParams.get("limit") || "60",
-    offset: searchParams.get("offset") || "0",
+    limit: sanitizeNumber(searchParams.get("limit"), "60", 100),
+    offset: sanitizeNumber(searchParams.get("offset"), "0", 10000),
     order: validOrder === "endDate" ? "end_date" : validOrder,
-    ascending: searchParams.get("ascending") || "false",
-    active: searchParams.get("active") || "true",
-    closed: searchParams.get("closed") || "false",
+    ascending: searchParams.get("ascending") === "true" ? "true" : "false",
+    active: searchParams.get("active") === "false" ? "false" : "true",
+    closed: searchParams.get("closed") === "true" ? "true" : "false",
   })
 
-  // Add optional filters
-  if (searchParams.get("liquidity_num_min")) {
-    params.set("liquidity_num_min", searchParams.get("liquidity_num_min")!)
+  const liquidityMin = searchParams.get("liquidity_num_min")
+  if (liquidityMin && !isNaN(Number.parseFloat(liquidityMin)) && Number.parseFloat(liquidityMin) >= 0) {
+    params.set("liquidity_num_min", sanitizeNumber(liquidityMin, "0", 1000000))
   }
-  if (searchParams.get("volume_num_min")) {
-    params.set("volume_num_min", searchParams.get("volume_num_min")!)
+
+  const volumeMin = searchParams.get("volume_num_min")
+  if (volumeMin && !isNaN(Number.parseFloat(volumeMin)) && Number.parseFloat(volumeMin) >= 0) {
+    params.set("volume_num_min", sanitizeNumber(volumeMin, "0", 1000000))
   }
-  if (searchParams.get("tag_id")) {
-    params.set("tag_id", searchParams.get("tag_id")!)
+
+  const tagId = searchParams.get("tag_id")
+  if (tagId && /^[a-zA-Z0-9][a-zA-Z0-9-_]{0,49}$/.test(tagId)) {
+    params.set("tag_id", tagId)
   }
 
   try {
-    console.log("[v0] Fetching from Polymarket API:", `${GAMMA_BASE}/markets?${params}`)
+    const apiUrl = `${GAMMA_BASE}/markets?${params.toString()}`
+    console.log("[v0] Fetching from Polymarket API:", apiUrl)
 
-    const response = await fetch(`${GAMMA_BASE}/markets?${params}`, {
+    const response = await fetch(apiUrl, {
       headers: {
         Accept: "application/json",
-        "User-Agent": "Polymarket-Live/1.0",
+        "User-Agent": "PolymarketLive/1.0",
       },
     })
 
     if (!response.ok) {
-      console.error("[v0] Polymarket API error:", response.status, response.statusText)
-      throw new Error(`Polymarket API error: ${response.status}`)
+      const errorText = await response.text().catch(() => "Unknown error")
+      console.error("[v0] Polymarket API error:", response.status, response.statusText, errorText)
+      throw new Error(`Polymarket API error: ${response.status} - ${errorText}`)
     }
 
     const data = await response.json()
