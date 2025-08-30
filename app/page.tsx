@@ -5,7 +5,7 @@ import Link from "next/link"
 import { OddsCard } from "@/components/odds-card"
 import { BreakingItem } from "@/components/breaking-item"
 import { config } from "@/lib/config"
-import { getAllContentPages } from "@/lib/content"
+import { getAllContentPages, getContentPagesByCategory } from "@/lib/content"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatDistanceToNow } from "date-fns"
 
@@ -73,11 +73,63 @@ async function getFeaturedContent() {
   }
 }
 
+async function getPoliticsContent() {
+  try {
+    const content = await getContentPagesByCategory("politics")
+    return content.slice(0, 3)
+  } catch (error) {
+    console.error("Error fetching politics content:", error)
+    return []
+  }
+}
+
+async function getSportsContent() {
+  try {
+    const content = await getContentPagesByCategory("sports")
+    return content.slice(0, 3)
+  } catch (error) {
+    console.error("Error fetching sports content:", error)
+    return []
+  }
+}
+
+async function getEntertainmentContent() {
+  try {
+    const content = await getContentPagesByCategory("entertainment")
+    return content.slice(0, 3)
+  } catch (error) {
+    console.error("Error fetching entertainment content:", error)
+    return []
+  }
+}
+
+async function getNewsContent() {
+  try {
+    const content = await getContentPagesByCategory("news")
+    return content.slice(0, 3)
+  } catch (error) {
+    console.error("Error fetching news content:", error)
+    return []
+  }
+}
+
 export default async function HomePage() {
-  const [trendingMarkets, breakingNews, featuredContent] = await Promise.all([
+  const [
+    trendingMarkets,
+    breakingNews,
+    featuredContent,
+    politicsContent,
+    sportsContent,
+    entertainmentContent,
+    newsContent,
+  ] = await Promise.all([
     getTrendingMarkets(),
     getBreakingNews(),
     getFeaturedContent(),
+    getPoliticsContent(),
+    getSportsContent(),
+    getEntertainmentContent(),
+    getNewsContent(),
   ])
 
   return (
@@ -236,6 +288,310 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Politics Section */}
+      {politicsContent.length > 0 && (
+        <section className="py-16 px-4">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">Politics & Geopolitics</h2>
+                <Badge variant="outline" className="text-xs">
+                  Latest Analysis
+                </Badge>
+              </div>
+              <Button variant="outline" asChild className="hover:scale-105 transition-transform bg-transparent">
+                <Link href="/content?category=politics">View All Politics</Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {politicsContent.map((article: any) => (
+                <Card key={article.id} className="hover:shadow-lg hover:scale-105 transition-all duration-300">
+                  <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 overflow-hidden rounded-t-lg flex items-center justify-center">
+                    {article.featuredImage ? (
+                      <img
+                        src={article.featuredImage || "/placeholder.svg"}
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-6">
+                        <BarChart3 className="w-12 h-12 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                        <p className="text-sm text-muted-foreground">Political Analysis</p>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                      >
+                        Politics
+                      </Badge>
+                      {article.readingTime && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.readingTime} min read
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-lg leading-tight">
+                      <Link
+                        href={`/content/${article.slug}`}
+                        className="hover:text-primary transition-colors line-clamp-2"
+                      >
+                        {article.title}
+                      </Link>
+                    </CardTitle>
+                    {article.excerpt && <p className="text-muted-foreground text-sm line-clamp-2">{article.excerpt}</p>}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                      <span>{article.authorName}</span>
+                      <span>{formatDistanceToNow(article.publishedAt || article.createdAt)} ago</span>
+                    </div>
+                    <Button asChild size="sm" className="w-full">
+                      <Link href={`/content/${article.slug}`}>
+                        Read Analysis
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Sports Section */}
+      {sportsContent.length > 0 && (
+        <section className="py-16 px-4 bg-muted/20">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">Sports Betting</h2>
+                <Badge variant="outline" className="text-xs">
+                  Live Markets
+                </Badge>
+              </div>
+              <Button variant="outline" asChild className="hover:scale-105 transition-transform bg-transparent">
+                <Link href="/content?category=sports">View All Sports</Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {sportsContent.map((article: any) => (
+                <Card key={article.id} className="hover:shadow-lg hover:scale-105 transition-all duration-300">
+                  <div className="aspect-video bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 overflow-hidden rounded-t-lg flex items-center justify-center">
+                    {article.featuredImage ? (
+                      <img
+                        src={article.featuredImage || "/placeholder.svg"}
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-6">
+                        <TrendingUp className="w-12 h-12 mx-auto mb-2 text-green-600 dark:text-green-400" />
+                        <p className="text-sm text-muted-foreground">Sports Analysis</p>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"
+                      >
+                        Sports
+                      </Badge>
+                      {article.readingTime && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.readingTime} min read
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-lg leading-tight">
+                      <Link
+                        href={`/content/${article.slug}`}
+                        className="hover:text-primary transition-colors line-clamp-2"
+                      >
+                        {article.title}
+                      </Link>
+                    </CardTitle>
+                    {article.excerpt && <p className="text-muted-foreground text-sm line-clamp-2">{article.excerpt}</p>}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                      <span>{article.authorName}</span>
+                      <span>{formatDistanceToNow(article.publishedAt || article.createdAt)} ago</span>
+                    </div>
+                    <Button asChild size="sm" className="w-full">
+                      <Link href={`/content/${article.slug}`}>
+                        Read Analysis
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Entertainment Section */}
+      {entertainmentContent.length > 0 && (
+        <section className="py-16 px-4">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">Entertainment & Culture</h2>
+                <Badge variant="outline" className="text-xs">
+                  Pop Culture Bets
+                </Badge>
+              </div>
+              <Button variant="outline" asChild className="hover:scale-105 transition-transform bg-transparent">
+                <Link href="/content?category=entertainment">View All Entertainment</Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {entertainmentContent.map((article: any) => (
+                <Card key={article.id} className="hover:shadow-lg hover:scale-105 transition-all duration-300">
+                  <div className="aspect-video bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/20 dark:to-rose-900/20 overflow-hidden rounded-t-lg flex items-center justify-center">
+                    {article.featuredImage ? (
+                      <img
+                        src={article.featuredImage || "/placeholder.svg"}
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-6">
+                        <ArrowRight className="w-12 h-12 mx-auto mb-2 text-pink-600 dark:text-pink-400" />
+                        <p className="text-sm text-muted-foreground">Entertainment News</p>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-pink-50 text-pink-700 dark:bg-pink-900/20 dark:text-pink-300"
+                      >
+                        Entertainment
+                      </Badge>
+                      {article.readingTime && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.readingTime} min read
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-lg leading-tight">
+                      <Link
+                        href={`/content/${article.slug}`}
+                        className="hover:text-primary transition-colors line-clamp-2"
+                      >
+                        {article.title}
+                      </Link>
+                    </CardTitle>
+                    {article.excerpt && <p className="text-muted-foreground text-sm line-clamp-2">{article.excerpt}</p>}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                      <span>{article.authorName}</span>
+                      <span>{formatDistanceToNow(article.publishedAt || article.createdAt)} ago</span>
+                    </div>
+                    <Button asChild size="sm" className="w-full">
+                      <Link href={`/content/${article.slug}`}>
+                        Read Analysis
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* News Section */}
+      {newsContent.length > 0 && (
+        <section className="py-16 px-4 bg-muted/20">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">Breaking News</h2>
+                <Badge variant="outline" className="text-xs">
+                  Market Moving
+                </Badge>
+              </div>
+              <Button variant="outline" asChild className="hover:scale-105 transition-transform bg-transparent">
+                <Link href="/content?category=news">View All News</Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {newsContent.map((article: any) => (
+                <Card key={article.id} className="hover:shadow-lg hover:scale-105 transition-all duration-300">
+                  <div className="aspect-video bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/20 overflow-hidden rounded-t-lg flex items-center justify-center">
+                    {article.featuredImage ? (
+                      <img
+                        src={article.featuredImage || "/placeholder.svg"}
+                        alt={article.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-6">
+                        <TrendingUp className="w-12 h-12 mx-auto mb-2 text-orange-600 dark:text-orange-400" />
+                        <p className="text-sm text-muted-foreground">Breaking News</p>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300"
+                      >
+                        News
+                      </Badge>
+                      {article.readingTime && (
+                        <Badge variant="secondary" className="text-xs">
+                          {article.readingTime} min read
+                        </Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-lg leading-tight">
+                      <Link
+                        href={`/content/${article.slug}`}
+                        className="hover:text-primary transition-colors line-clamp-2"
+                      >
+                        {article.title}
+                      </Link>
+                    </CardTitle>
+                    {article.excerpt && <p className="text-muted-foreground text-sm line-clamp-2">{article.excerpt}</p>}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
+                      <span>{article.authorName}</span>
+                      <span>{formatDistanceToNow(article.publishedAt || article.createdAt)} ago</span>
+                    </div>
+                    <Button asChild size="sm" className="w-full">
+                      <Link href={`/content/${article.slug}`}>
+                        Read Analysis
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Breaking Moves Section */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto">
@@ -328,6 +684,11 @@ export default async function HomePage() {
                 <li>
                   <Link href="/content?category=entertainment" className="hover:text-primary transition-colors">
                     Entertainment
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/content?category=news" className="hover:text-primary transition-colors">
+                    News
                   </Link>
                 </li>
               </ul>
