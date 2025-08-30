@@ -5,13 +5,13 @@ export function GET() {
 Allow: /
 
 # Sitemaps
-Sitemap: ${process.env.NEXT_PUBLIC_BASE_URL || "https://betthenews.vercel.app"}/sitemap.xml
+Sitemap: ${process.env.NEXT_PUBLIC_BASE_URL || "https://polymarketbonus.com"}/sitemap.xml
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1
 
-# Disallow admin or sensitive areas (none currently)
-# Disallow: /admin
+# Disallow admin or sensitive areas
+Disallow: /cms/
 `
 
   return new NextResponse(robotsTxt, {

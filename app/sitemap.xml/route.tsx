@@ -2,24 +2,27 @@ import { NextResponse } from "next/server"
 import { TOPICS } from "@/data/topics"
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://betthenews.vercel.app"
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://polymarketbonus.com"
   const currentDate = new Date().toISOString()
 
   // Static pages
   const staticPages = [
     { url: "", priority: "1.0", changefreq: "daily" },
-    { url: "/news-to-bets", priority: "0.9", changefreq: "hourly" },
     { url: "/markets", priority: "0.9", changefreq: "hourly" },
-    { url: "/guides", priority: "0.8", changefreq: "weekly" },
-    { url: "/guides/what-is-a-prediction-market", priority: "0.7", changefreq: "monthly" },
-    { url: "/guides/how-odds-work", priority: "0.7", changefreq: "monthly" },
-    { url: "/guides/is-polymarket-legal-in-us-and-canada", priority: "0.7", changefreq: "monthly" },
-    { url: "/guides/how-to-deposit-usdc-and-trade", priority: "0.7", changefreq: "monthly" },
-    { url: "/guides/responsible-wagering", priority: "0.7", changefreq: "monthly" },
-    { url: "/promos", priority: "0.6", changefreq: "weekly" },
-    { url: "/about", priority: "0.5", changefreq: "monthly" },
-    { url: "/legal", priority: "0.4", changefreq: "monthly" },
+    { url: "/breaking", priority: "0.9", changefreq: "hourly" },
+    { url: "/content", priority: "0.8", changefreq: "daily" },
+    { url: "/about", priority: "0.7", changefreq: "monthly" },
+    { url: "/privacy", priority: "0.5", changefreq: "monthly" },
+    { url: "/terms", priority: "0.5", changefreq: "monthly" },
+    { url: "/contact", priority: "0.6", changefreq: "monthly" },
   ]
+
+  const contentCategories = ["news", "politics", "sports", "entertainment", "tech", "economy"]
+  const categoryPages = contentCategories.map((category) => ({
+    url: `/content/${category}`,
+    priority: "0.7",
+    changefreq: "daily",
+  }))
 
   // Topic pages
   const topicPages = TOPICS.map((topic) => ({
@@ -28,7 +31,7 @@ export async function GET() {
     changefreq: "daily",
   }))
 
-  const allPages = [...staticPages, ...topicPages]
+  const allPages = [...staticPages, ...categoryPages, ...topicPages]
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
