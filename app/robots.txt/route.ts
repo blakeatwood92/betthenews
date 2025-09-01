@@ -9,9 +9,6 @@ Sitemap: ${process.env.NEXT_PUBLIC_BASE_URL || "https://polymarketbonus.com"}/si
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1
-
-# Disallow admin or sensitive areas
-Disallow: /cms/
 `
 
   return new NextResponse(robotsTxt, {

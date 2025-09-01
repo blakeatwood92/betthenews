@@ -9,25 +9,28 @@ export default function TestPage() {
 
         <div className="space-y-4">
           <div className="p-4 border rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">CMS Access</h2>
-            <p className="text-muted-foreground mb-4">Try accessing the CMS login page:</p>
-            <a
-              href="/cms/login"
-              className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-            >
-              Go to CMS Login
-            </a>
-          </div>
-
-          <div className="p-4 border rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">Simple CMS Test</h2>
-            <p className="text-muted-foreground mb-4">Try the simple CMS test page:</p>
-            <a
-              href="/cms/test"
-              className="inline-block px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/90"
-            >
-              Go to CMS Test
-            </a>
+            <h2 className="text-xl font-semibold mb-2">Site Navigation</h2>
+            <p className="text-muted-foreground mb-4">Test the main site pages:</p>
+            <div className="space-x-2">
+              <a
+                href="/"
+                className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Homepage
+              </a>
+              <a
+                href="/content"
+                className="inline-block px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/90"
+              >
+                Content
+              </a>
+              <a
+                href="/markets"
+                className="inline-block px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/90"
+              >
+                Markets
+              </a>
+            </div>
           </div>
         </div>
       </div>
